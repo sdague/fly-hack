@@ -42,6 +42,13 @@ ENV = {}
 FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 LOG = logging.getLogger('fly-hack')
+# Left for debugging purposes, the flyhack log will end up in the same
+# directory as the files you are editing as emacs sets working
+# directory based on buffer.
+#
+#
+# fh = logging.FileHandler('flyhack.log')
+# fh.setLevel(logging.DEBUG)
 
 
 def find_realpath_to_file(fname):
@@ -133,6 +140,11 @@ def run(cmd, fname, *args):
     fullcmd.append(fname)
     fullcmd.extend(args)
 
+    # if we have a PWD chdir there before we run it to pick up hacking
+    # config in tox.ini (it doesn't know how to parse anything except
+    # a relative path tox.ini)
+    if 'PWD' in ENV:
+        os.chdir(ENV['PWD'])
     proc = subprocess.Popen(fullcmd, stderr=subprocess.PIPE,
                             stdout=subprocess.PIPE, env=ENV)
     for line in proc.stdout:
@@ -142,11 +154,13 @@ def run(cmd, fname, *args):
     sys.exit(proc.returncode)
 
 
-def main(filena):
-    args = get_args()
-    absfile = find_realpath_to_file(args.file)
+def main():
+    fname = get_args().file[0]
+    absfile = find_realpath_to_file(fname)
     testrunner = find_flake8(absfile)
-    run(testrunner, args.file)
+    # this final abspath lets us safely do the chdir for hacking. It
+    # also makes it simpler to run from the command line.
+    run(testrunner, os.path.abspath(fname))
 
 
 def get_args():
