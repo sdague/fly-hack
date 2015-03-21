@@ -20,6 +20,9 @@ error for that project, one that will bounce your code?
 
 The answer seems to be yes, and is this project.
 
+.. image:: images/fly-hack-in-action.png
+           :alt: fly-hack in action
+
 WARNING
 =======
 
