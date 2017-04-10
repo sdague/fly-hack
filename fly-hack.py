@@ -39,16 +39,21 @@ import sys
 # accumulate this as a global.
 ENV = {}
 
-FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
+FORMAT = '%(asctime)-15s - %(message)s'
+
 logging.basicConfig(format=FORMAT)
+# LOG_FILENAME = '/home/sdague/flyhack.log'
+# logging.basicConfig(format=FORMAT, filename=LOG_FILENAME,
+# level=logging.DEBUG)
 LOG = logging.getLogger('fly-hack')
 # Left for debugging purposes, the flyhack log will end up in the same
 # directory as the files you are editing as emacs sets working
 # directory based on buffer.
 #
 #
-# fh = logging.FileHandler('flyhack.log')
+# fh = logging.FileHandler('/home/sdague/flyhack.log')
 # fh.setLevel(logging.DEBUG)
+# LOG.addHandler(fh)
 
 
 def find_realpath_to_file(fname):
@@ -74,10 +79,11 @@ def ignores(path):
     LOG.debug("Tox %s\n" % toxini)
     config = ConfigParser.ConfigParser()
     config.read(toxini)
-    if config.has_option('flake8', 'ignore'):
-        return config.get('flake8', 'ignore')
-    else:
-        return ''
+    options = {}
+    for option in ('ignore', 'import-order-style', 'application-import-names'):
+        if config.has_option('flake8', option):
+            options[option] = config.get('flake8', option)
+    return options
 
 
 def find_flake8(fname):
@@ -104,7 +110,8 @@ def find_flake8(fname):
             # we found a flake8 in a venv so set that as the running venv
             ENV["VIRTUAL_ENV"] = venv
             # parse the ignores to pass them on the command line
-            ENV["IGNORES"] = ignores(path)
+            ENV["CONFIG"] = ignores(path)
+            ENV["IGNORES"] = ENV["CONFIG"].get("ignore", "")
             # set the working directory so that 'hacking' can pick up
             # it's config
             ENV['PWD'] = path
@@ -129,24 +136,34 @@ def find_flake8(fname):
         ENV['IGNORES'] = 'H,E12'
         runner = venv + "/bin/flake8"
 
+    LOG.debug("Runner is %s" % runner)
     return runner
 
 
 def run(cmd, fname, *args):
-    LOG.debug("attempting to run %s %s\n" % (cmd, fname))
+    LOG.info("attempting to run %s %s\n" % (cmd, fname))
     fullcmd = [cmd]
     if "IGNORES" in ENV:
         fullcmd.append("--ignore=%s" % ENV["IGNORES"])
+        del ENV["IGNORES"]
+    # flake8-import-order work arounds, people should not use this module.
+    for workaround in ('import-order-style', 'application-import-names'):
+        if "CONFIG" in ENV:
+            value = ENV["CONFIG"].get(workaround, "")
+            if value:
+                fullcmd.append("--%s=%s" % (workaround, value))
     fullcmd.append(fname)
     fullcmd.extend(args)
-
+    LOG.info("Running: %s" % " ".join(fullcmd))
     # if we have a PWD chdir there before we run it to pick up hacking
     # config in tox.ini (it doesn't know how to parse anything except
     # a relative path tox.ini)
     if 'PWD' in ENV:
         os.chdir(ENV['PWD'])
+    if 'VIRTUAL_ENV' in ENV:
+        del ENV['VIRTUAL_ENV']
     proc = subprocess.Popen(fullcmd, stderr=subprocess.PIPE,
-                            stdout=subprocess.PIPE, env=ENV)
+                            stdout=subprocess.PIPE)
     for line in proc.stdout:
         LOG.debug("Flake8: %s " % line)
         print line
