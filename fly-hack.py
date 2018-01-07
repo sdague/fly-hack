@@ -86,6 +86,29 @@ def ignores(path):
     return options
 
 
+def _find_possible_tox(path, toxenv):
+    """Given a path and a tox target, see if flake8 is already installed."""
+
+    runner = None
+    # First try to discover existing flake8
+    while(path and path != '/'):
+        path = os.path.dirname(path)
+        # the locations of possible flake8
+        venv = path + "/.tox/%s" % toxenv
+        flake8 = venv + "/bin/flake8"
+        if os.path.isdir(venv) and os.path.exists(flake8):
+            # we found a flake8 in a venv so set that as the running venv
+            ENV["VIRTUAL_ENV"] = venv
+            # parse the ignores to pass them on the command line
+            ENV["CONFIG"] = ignores(path)
+            ENV["IGNORES"] = ENV["CONFIG"].get("ignore", "")
+            # set the working directory so that 'hacking' can pick up
+            # it's config
+            ENV['PWD'] = path
+            LOG.debug("Found flake8 %s, ENV=%s" % (flake8, ENV))
+            return flake8
+
+
 def find_flake8(fname):
     """Given an absolute file, find a relevant flake8 venv.
 
@@ -100,23 +123,10 @@ def find_flake8(fname):
     path = fname
     runner = None
 
-    # First try to discover existing flake8
-    while(path and path != '/'):
-        path = os.path.dirname(path)
-        # the locations of possible flake8
-        venv = path + "/.tox/pep8"
-        flake8 = path + "/.tox/pep8/bin/flake8"
-        if os.path.isdir(venv) and os.path.exists(flake8):
-            # we found a flake8 in a venv so set that as the running venv
-            ENV["VIRTUAL_ENV"] = venv
-            # parse the ignores to pass them on the command line
-            ENV["CONFIG"] = ignores(path)
-            ENV["IGNORES"] = ENV["CONFIG"].get("ignore", "")
-            # set the working directory so that 'hacking' can pick up
-            # it's config
-            ENV['PWD'] = path
-            runner = flake8
-            LOG.debug("Found flake8 %s, ENV=%s" % (flake8, ENV))
+    for toxenv in ("pep8", "lint"):
+        runner = _find_possible_tox(path, toxenv)
+        if runner is not None:
+            break
 
     # or we might be a sad panda, and have no flake8, in which case,
     # lets make one.
