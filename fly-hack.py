@@ -123,7 +123,7 @@ def find_flake8(fname):
     path = fname
     runner = None
 
-    for toxenv in ("pep8", "lint"):
+    for toxenv in ("flake8", "pep8", "lint"):
         runner = _find_possible_tox(path, toxenv)
         if runner is not None:
             break
