@@ -80,7 +80,7 @@ def ignores(path):
     config = ConfigParser.ConfigParser()
     config.read(toxini)
     options = {}
-    for option in ('ignore', 'import-order-style', 'application-import-names'):
+    for option in ('ignore', 'import-order-style', 'application-import-names', 'max-line-length'):
         if config.has_option('flake8', option):
             options[option] = config.get('flake8', option)
     return options
@@ -157,7 +157,7 @@ def run(cmd, fname, *args):
         fullcmd.append("--ignore=%s" % ENV["IGNORES"])
         del ENV["IGNORES"]
     # flake8-import-order work arounds, people should not use this module.
-    for workaround in ('import-order-style', 'application-import-names'):
+    for workaround in ('import-order-style', 'application-import-names', 'max-line-length'):
         if "CONFIG" in ENV:
             value = ENV["CONFIG"].get(workaround, "")
             if value:
