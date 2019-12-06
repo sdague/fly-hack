@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2015 Sean Dague <sean@dague.net>
 #
@@ -28,7 +28,7 @@ to a file.
 """
 
 import argparse
-import ConfigParser
+import configparser
 import logging
 import os
 import re
@@ -77,7 +77,7 @@ def ignores(path):
     """Pull the flake8 ignores out of the tox file"""
     toxini = path + "/tox.ini"
     LOG.debug("Tox %s\n" % toxini)
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(toxini)
     options = {}
     for option in ('ignore', 'import-order-style', 'application-import-names', 'max-line-length'):
@@ -176,7 +176,7 @@ def run(cmd, fname, *args):
                             stdout=subprocess.PIPE)
     for line in proc.stdout:
         LOG.debug("Flake8: %s " % line)
-        print line
+        print(line)
 
     sys.exit(proc.returncode)
 
