@@ -79,7 +79,8 @@ def ignores(path):
     config = configparser.ConfigParser()
     config.read(toxini)
     options = {}
-    for option in ('ignore', 'import-order-style', 'application-import-names', 'max-line-length'):
+    for option in ('ignore', 'import-order-style',
+                   'application-import-names', 'max-line-length'):
         if config.has_option('flake8', option):
             options[option] = config.get('flake8', option)
     return options
@@ -88,7 +89,6 @@ def ignores(path):
 def _find_possible_tox(path, toxenv):
     """Given a path and a tox target, see if flake8 is already installed."""
 
-    runner = None
     # First try to discover existing flake8
     while(path and path != '/'):
         path = os.path.dirname(path)
@@ -156,7 +156,8 @@ def run(cmd, fname, *args):
         fullcmd.append("--ignore=%s" % ENV["IGNORES"])
         del ENV["IGNORES"]
     # flake8-import-order work arounds, people should not use this module.
-    for workaround in ('import-order-style', 'application-import-names', 'max-line-length'):
+    for workaround in ('import-order-style',
+                       'application-import-names', 'max-line-length'):
         if "CONFIG" in ENV:
             value = ENV["CONFIG"].get(workaround, "")
             if value:
