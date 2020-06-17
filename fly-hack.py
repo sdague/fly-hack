@@ -42,9 +42,8 @@ ENV = {}
 FORMAT = '%(asctime)-15s - %(message)s'
 
 logging.basicConfig(format=FORMAT)
-# LOG_FILENAME = '/home/sdague/flyhack.log'
-# logging.basicConfig(format=FORMAT, filename=LOG_FILENAME,
-# level=logging.DEBUG)
+LOG_FILENAME = '/home/sdague/flyhack.log'
+logging.basicConfig(format=FORMAT, filename=LOG_FILENAME, level=logging.DEBUG)
 LOG = logging.getLogger('fly-hack')
 # Left for debugging purposes, the flyhack log will end up in the same
 # directory as the files you are editing as emacs sets working
@@ -175,8 +174,8 @@ def run(cmd, fname, *args):
     proc = subprocess.Popen(fullcmd, stderr=subprocess.PIPE,
                             stdout=subprocess.PIPE)
     for line in proc.stdout:
-        LOG.debug("Flake8: %s " % line)
-        print(line)
+        LOG.debug("Flake8: %s " % line.decode("utf-8"))
+        print(line.decode("utf-8"))
 
     sys.exit(proc.returncode)
 
